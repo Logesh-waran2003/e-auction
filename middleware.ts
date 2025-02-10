@@ -1,19 +1,54 @@
-import { NextResponse, NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
+export default withAuth(
+  function middleware(req) {
+    // If the user is already logged in, redirect him to dashboard
+    // if he tries to access the login or register page
+    const token = req.nextauth.token;
+    const isAuth = !!token;
+    const isAuthPage =
+      req.nextUrl.pathname.startsWith("/login") ||
+      req.nextUrl.pathname.startsWith("/register");
 
-export async function middleware(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    if (isAuthPage) {
+      if (isAuth) {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
+      return null; // If not logged in, allow access to login and register pages
+    }
 
-  const protectedPaths = ["/dashboard", "/admin"];
-  const pathname = req.nextUrl.pathname;
+    // If the user is not logged in, redirect him to login page
+    // with the original URL as a parameter so that we can redirect
+    // him back to the original page after login
+    if (!isAuth) {
+      let from = req.nextUrl.pathname;
+      if (req.nextUrl.search) {
+        from += req.nextUrl.search;
+      }
 
-  if (protectedPaths.includes(pathname) && !token) {
-    return NextResponse.redirect(new URL("/login", req.url));
+      return NextResponse.redirect(
+        new URL(`/login?from=${encodeURIComponent(from)}`, req.url)
+      );
+    }
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => true, // always allow access if there is a token
+    },
   }
-
-  return NextResponse.next();
-}
+);
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - login
+     * - register
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|login|register).*)",
+  ],
 };

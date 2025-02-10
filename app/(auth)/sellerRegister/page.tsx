@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { useAuthStore } from "@/store/authStore";
 import { z } from "zod";
+import { User } from "@/types";
 
 interface ErrorResponse {
   message: string;
@@ -19,7 +20,9 @@ const registerSchema = z.object({
   companyName: z.string().nonempty("Company name is required"),
   email: z.string().email("Invalid email address"),
   phoneNo: z.string().nonempty("Phone number is required"),
-  companyRegistrationNo: z.string().nonempty("Company registration number is required"),
+  companyRegistrationNo: z
+    .string()
+    .nonempty("Company registration number is required"),
   address: z.string().nonempty("Address is required"),
   bidderType: z.enum(["BUYER", "SELLER"]),
   city: z.string().nonempty("City is required"),
@@ -71,7 +74,7 @@ export default function RegisterPage() {
 
     const validation = registerSchema.safeParse(form);
     if (!validation.success) {
-      setError(validation.error.errors.map(err => err.message).join(", "));
+      setError(validation.error.errors.map((err) => err.message).join(", "));
       setLoading(false);
       return;
     }

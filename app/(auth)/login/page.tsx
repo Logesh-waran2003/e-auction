@@ -64,24 +64,27 @@ export default function LoginPage() {
             <input
               type="radio"
               name="userType"
-              value="seller"
+              value="SELLER"
               className="mr-2"
+              onChange={handleChange}
               required
             />
             <span className="mr-4">Seller</span>
             <input
               type="radio"
               name="userType"
-              value="buyer"
+              value="BUYER"
               className="mr-2"
+              onChange={handleChange}
               required
             />
             <span className="mr-4">Buyer</span>
             <input
               type="radio"
               name="userType"
-              value="admin"
+              value="SUPER_ADMIN"
               className="mr-2"
+              onChange={handleChange}
               required
             />
             <span>Admin</span>

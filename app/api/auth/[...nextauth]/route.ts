@@ -8,9 +8,15 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      role?: string;
-      isApproved?: boolean;
+      role: Role;
+      isApproved: boolean;
     } & DefaultSession["user"];
+  }
+
+  interface JWT {
+    id: string;
+    role: Role;
+    isApproved: boolean;
   }
 }
 
@@ -50,6 +56,8 @@ export const authOptions: NextAuthOptions = {
         );
         if (!isValidPassword) throw new Error("Invalid credentials");
 
+        if (!user.isApproved) throw new Error("Account not approved");
+
         return {
           id: user.id,
           role: user.role,
@@ -61,27 +69,38 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, token }) {
-      console.log("session: ", session, "token: ", token);
-      if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.email = token.email;
-        session.user.name = token.name;
-        session.user.isApproved = token.isApproved;
-      }
-      return session;
-    },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
+        // Initial sign in
         token.id = user.id;
         token.role = user.role;
         token.isApproved = user.isApproved;
       }
+
+      // Handle updates if needed
+      if (trigger === "update" && session) {
+        Object.assign(token, session);
+      }
+
       return token;
     },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role as Role;
+        session.user.isApproved = token.isApproved;
+      }
+      return session;
+    },
   },
-  session: { strategy: "jwt" },
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   secret: process.env.NEXTAUTH_SECRET,
 };
 

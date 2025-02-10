@@ -1,14 +1,13 @@
-import { NextResponse } from 'next/server';
-import { useAuthStore } from '@/store/authStore';
+import { signOut } from "next-auth/react";
+import { NextResponse } from "next/server";
 
 export async function POST() {
-  // Clear the session (e.g., delete cookies or tokens)
-  // For example, if using cookies:
-  // const response = NextResponse.json({ success: true });
-  // response.cookies.delete('session-token');
-
-  // Clear the user in the auth store
-  useAuthStore.getState().logout();
-
-  return NextResponse.json({ success: true });
+  try {
+    await signOut({ callbackUrl: "/" });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to logout";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  }
 }

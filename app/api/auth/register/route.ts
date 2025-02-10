@@ -34,7 +34,7 @@ export async function POST(req: Request) {
         email,
         password: hashedPassword,
         role,
-        isApproved: role === "BUYER", // Sellers need admin approval
+        isApproved: role != "SELLER", // Sellers need admin approval
       },
     });
 
