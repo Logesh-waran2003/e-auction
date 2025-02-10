@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", userType: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -23,7 +23,10 @@ export default function LoginPage() {
       redirect: false,
       email: form.email,
       password: form.password,
+      role: form.userType,
     });
+
+    console.log("result", result);
 
     if (result?.error) {
       setError(result.error);
