@@ -7,6 +7,7 @@ import { useEffect } from "react";
 
 export default function Dashboard() {
   const { user } = useAuthStore();
+  console.log("user: ", user);
 
   useEffect(() => {
     const checkSession = async () => {
