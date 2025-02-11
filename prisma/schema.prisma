@@ -15,11 +15,11 @@ model User {
   role       Role     @default(BUYER)
   isApproved Boolean  @default(false) // Used for seller approval
   profile    Profile?
+  createdAt  DateTime @default(now())
 
-  auctions Auction[]
-  bids     Bid[]
-
-  Comment Comment[]
+  auctions Auction[] @relation("SellerAuctions")
+  bids     Bid[]     @relation("UserBids")
+  Comment  Comment[]
 }
 
 model Profile {
@@ -45,19 +45,35 @@ model Profile {
 }
 
 model Auction {
-  id          String @id @default(uuid())
-  title       String
-  description String
-  startPrice  Float
-  sellerId    String
-  seller      User   @relation(fields: [sellerId], references: [id])
-
-  isApproved  Boolean   @default(false) // Admin must approve
-  auctionDate DateTime?
-  bids        Bid[]
-  createdAt   DateTime  @default(now())
+  id           String        @id @default(cuid())
+  title        String
+  description  String
+  startPrice   Float
+  currentPrice Float
+  images       String[] // Array of image URLs
+  seller       User          @relation("SellerAuctions", fields: [sellerId], references: [id])
+  sellerId     String
+  bids         Bid[]
+  status       AuctionStatus @default(DRAFT)
+  isApproved   Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  endTime      DateTime
+  updatedAt    DateTime      @updatedAt
 
   Comment Comment[]
+}
+
+model Bid {
+  id        String   @id @default(cuid())
+  amount    Float
+  bidder    User     @relation("UserBids", fields: [bidderId], references: [id])
+  bidderId  String
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  auctionId String
+  createdAt DateTime @default(now())
+
+  @@index([auctionId])
+  @@index([bidderId])
 }
 
 model Comment {
@@ -70,18 +86,16 @@ model Comment {
   createdAt DateTime @default(now())
 }
 
-model Bid {
-  id        String   @id @default(uuid())
-  amount    Float
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  auctionId String
-  auction   Auction  @relation(fields: [auctionId], references: [id])
-  createdAt DateTime @default(now())
-}
-
 enum Role {
   BUYER
   SELLER
   SUPER_ADMIN
+}
+
+enum AuctionStatus {
+  DRAFT
+  ACTIVE
+  ENDED
+  CANCELLED
+  PENDING
 }

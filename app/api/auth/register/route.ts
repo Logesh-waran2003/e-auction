@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -9,19 +9,22 @@ export async function POST(req: Request) {
     const body = await req.json(); // Read once
     console.log("Request body:", body);
 
-    const { name, email, password, role } = body; // Use the stored body
+    const { email, password, name } = body;
 
-    if (!name || !email || !password || !role) {
+    if (!email || !password || !name) {
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
     if (existingUser) {
       return NextResponse.json(
-        { message: "Email already in use" },
+        { message: "User already exists" },
         { status: 400 }
       );
     }
@@ -30,23 +33,20 @@ export async function POST(req: Request) {
 
     const newUser = await prisma.user.create({
       data: {
-        name,
         email,
         password: hashedPassword,
-        role,
-        isApproved: role != "SELLER", // Sellers need admin approval
+        role: Role.BUYER,
+        name,
+        isApproved: true, // Buyers are automatically approved
       },
     });
 
     return NextResponse.json(
       {
-        data: newUser,
-        message: "Registration successful",
+        message: "User registered successfully",
+        user: newUser,
       },
-      {
-        status: 201,
-        headers: { "Content-Type": "application/json" },
-      }
+      { status: 201 }
     );
   } catch (error) {
     console.error("Error registering user:", {

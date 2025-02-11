@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { useAuthStore } from "@/store/authStore";
 import { User } from "@/types";
+import Link from "next/link";
 
 interface ErrorResponse {
   message: string;
@@ -12,7 +13,7 @@ interface ErrorResponse {
 
 interface RegisterResponse {
   message: string;
-  user: User; // Replace `any` with the actual user type if known
+  user: User;
 }
 
 export default function RegisterPage() {
@@ -26,11 +27,13 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  useEffect(() => {
+    console.log("form: ", form);
+  }, [form]);
 
   const { setUser } = useAuthStore();
 
@@ -58,7 +61,7 @@ export default function RegisterPage() {
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-      <h2 className="text-2xl font-semibold mb-4">Register</h2>
+      <h2 className="text-2xl font-semibold mb-4">Register as Buyer</h2>
       {error && <p className="text-red-500">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
@@ -85,22 +88,24 @@ export default function RegisterPage() {
           className="w-full p-2 border rounded"
           required
         />
-        <select
-          name="role"
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        >
-          <option value="BUYER">Buyer</option>
-          <option value="SELLER">Seller</option>
-        </select>
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-500 text-white p-2 rounded"
+          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
         >
           {loading ? "Registering..." : "Register"}
         </button>
       </form>
+
+      <div className="mt-4 text-center">
+        <p className="text-gray-600">Are you a seller?</p>
+        <Link
+          href="/sellerRegister"
+          className="text-blue-500 hover:text-blue-600 font-medium"
+        >
+          Register as Seller
+        </Link>
+      </div>
     </div>
   );
 }

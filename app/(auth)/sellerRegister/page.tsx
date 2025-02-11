@@ -24,7 +24,6 @@ const registerSchema = z.object({
     .string()
     .nonempty("Company registration number is required"),
   address: z.string().nonempty("Address is required"),
-  bidderType: z.enum(["BUYER", "SELLER"]),
   city: z.string().nonempty("City is required"),
   state: z.string().nonempty("State is required"),
   postalCode: z.string().nonempty("Postal code is required"),
@@ -33,7 +32,9 @@ const registerSchema = z.object({
   panTanNo: z.string().nonempty("PAN/TAN number is required"),
   contactName: z.string().nonempty("Contact name is required"),
   contactPhoneNo: z.string().nonempty("Contact phone number is required"),
-  designation: z.string().nonempty("Designation is required"),
+  country: z.string().nonempty("Country is required"),
+  dob: z.string().nonempty("Date of Birth is required"),
+  taxId: z.string().nonempty("Tax ID is required"),
 });
 
 export default function RegisterPage() {
@@ -44,7 +45,6 @@ export default function RegisterPage() {
     phoneNo: "",
     companyRegistrationNo: "",
     address: "",
-    bidderType: "BUYER",
     city: "",
     state: "",
     postalCode: "",
@@ -53,7 +53,9 @@ export default function RegisterPage() {
     panTanNo: "",
     contactName: "",
     contactPhoneNo: "",
-    designation: "",
+    country: "",
+    dob: "",
+    taxId: "",
   };
   const [form, setForm] = useState(initialFormState);
   const [loading, setLoading] = useState(false);
@@ -74,6 +76,7 @@ export default function RegisterPage() {
 
     const validation = registerSchema.safeParse(form);
     if (!validation.success) {
+      console.log("validation.error: ", validation);
       setError(validation.error.errors.map((err) => err.message).join(", "));
       setLoading(false);
       return;
@@ -81,7 +84,7 @@ export default function RegisterPage() {
 
     try {
       const response = (await axios.post<RegisterResponse>(
-        "/api/auth/register",
+        "/api/auth/seller-register",
         form
       )) as AxiosResponse<RegisterResponse>;
       console.log("response.data: ", response.data);
@@ -156,15 +159,6 @@ export default function RegisterPage() {
           className="w-full p-2 border rounded"
           required
         />
-        <select
-          name="bidderType"
-          onChange={handleChange}
-          value={form.bidderType}
-          className="w-full p-2 border rounded"
-        >
-          <option value="BUYER">Buyer</option>
-          <option value="SELLER">Seller</option>
-        </select>
         <input
           type="text"
           name="city"
@@ -239,13 +233,52 @@ export default function RegisterPage() {
         />
         <input
           type="text"
-          name="designation"
-          placeholder="Designation"
+          name="country"
+          placeholder="Country"
           onChange={handleChange}
-          value={form.designation}
+          value={form.country}
           className="w-full p-2 border rounded"
           required
         />
+        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+          <div className="sm:col-span-3">
+            <label
+              htmlFor="dob"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Date of Birth
+            </label>
+            <div className="mt-2">
+              <input
+                type="date"
+                name="dob"
+                id="dob"
+                value={form.dob}
+                onChange={handleChange}
+                className="block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
+
+          <div className="sm:col-span-3">
+            <label
+              htmlFor="taxId"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Tax ID
+            </label>
+            <div className="mt-2">
+              <input
+                type="text"
+                name="taxId"
+                id="taxId"
+                value={form.taxId}
+                onChange={handleChange}
+                className="block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
+        </div>
         <div className="flex justify-between">
           <button
             type="submit"
