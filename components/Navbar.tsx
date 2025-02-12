@@ -49,7 +49,7 @@ export function Navbar({ user }: NavbarProps) {
             <div className="flex space-x-4 ml-8">
               {navItems[user.role].map((item) => (
                 <Link
-                  key={item.href}
+                  key={item.label}
                   href={item.href}
                   className="text-sm text-gray-700 hover:text-gray-900"
                 >
