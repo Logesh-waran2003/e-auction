@@ -3,75 +3,32 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApprovals } from "@/hooks/useApprovals";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { useState } from "react";
-
-interface DetailsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  data: any;
-  title: string;
-}
-
-function DetailsModal({ isOpen, onClose, data, title }: DetailsModalProps) {
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <div className="mt-4 space-y-4">
-          {Object.entries(data).map(([key, value]) => {
-            if (key === "id" || typeof value === "function") return null;
-            if (typeof value === "object" && value !== null) {
-              return (
-                <div key={key} className="space-y-2">
-                  <h3 className="font-semibold capitalize">{key}</h3>
-                  <div className="pl-4">
-                    {Object.entries(value).map(([subKey, subValue]) => {
-                      if (subKey === "id" || typeof subValue === "function")
-                        return null;
-                      return (
-                        <div key={subKey} className="flex gap-2">
-                          <span className="font-medium capitalize">
-                            {subKey}:
-                          </span>
-                          <span>{String(subValue)}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            }
-            return (
-              <div key={key} className="flex gap-2">
-                <span className="font-medium capitalize">{key}:</span>
-                <span>{String(value)}</span>
-              </div>
-            );
-          })}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+import { SellerDetailsModal } from "@/components/approvals/SellerDetailsModal";
+import { AuctionDetailsModal } from "@/components/approvals/AuctionDetailsModal";
+import { useState, useEffect } from "react";
+import { User, Auction, ApprovalsData } from "@/types";
 
 export default function ApprovalsPage() {
   const { data, loading, handleApproval } = useApprovals();
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<User | Auction | null>(null);
   const [modalType, setModalType] = useState<"seller" | "auction" | null>(null);
+
+  useEffect(() => {
+    if (data) {
+      console.log('Approvals Page - All Data:', {
+        pendingSellers: data.pendingSellers,
+        pendingAuctions: data.pendingAuctions,
+        totalUsers: data.totalUsers
+      });
+    }
+  }, [data]);
 
   if (loading) {
     return <div className="p-6">Loading...</div>;
   }
 
-  const openModal = (type: "seller" | "auction", item: any) => {
+  const openModal = (type: "seller" | "auction", item: User | Auction) => {
+    console.log(`Opening ${type} modal with data:`, item);
     setModalType(type);
     setSelectedItem(item);
   };
@@ -79,6 +36,16 @@ export default function ApprovalsPage() {
   const closeModal = () => {
     setModalType(null);
     setSelectedItem(null);
+  };
+
+  const handleApprove = (type: "seller" | "auction", id: string) => {
+    console.log(`Approving ${type} with ID:`, id);
+    handleApproval(type, id, true);
+  };
+
+  const handleReject = (type: "seller" | "auction", id: string) => {
+    console.log(`Rejecting ${type} with ID:`, id);
+    handleApproval(type, id, false);
   };
 
   return (
@@ -96,18 +63,18 @@ export default function ApprovalsPage() {
 
         <TabsContent value="sellers">
           {data.pendingSellers.length === 0 ? (
-            <div className="p-4">
-              <p className="text-gray-500">No pending sellers to approve</p>
+            <div className="text-center py-4 text-gray-500">
+              No pending seller approvals
             </div>
           ) : (
-            <div className="divide-y">
-              {data.pendingSellers.map((seller: any) => (
+            <div className="space-y-4">
+              {data.pendingSellers.map((seller) => (
                 <div
                   key={seller.id}
-                  className="p-4 flex items-center justify-between"
+                  className="flex items-center justify-between p-4 bg-white rounded-lg shadow"
                 >
                   <div>
-                    <p className="font-medium">{seller.name}</p>
+                    <h3 className="font-medium">{seller.name}</h3>
                     <p className="text-sm text-gray-500">{seller.email}</p>
                   </div>
                   <div className="space-x-2">
@@ -118,13 +85,13 @@ export default function ApprovalsPage() {
                       View Details
                     </Button>
                     <Button
-                      onClick={() => handleApproval("seller", seller.id, true)}
+                      onClick={() => handleApprove("seller", seller.id)}
                       className="bg-green-500 hover:bg-green-600"
                     >
                       Approve
                     </Button>
                     <Button
-                      onClick={() => handleApproval("seller", seller.id, false)}
+                      onClick={() => handleReject("seller", seller.id)}
                       variant="destructive"
                     >
                       Reject
@@ -138,41 +105,37 @@ export default function ApprovalsPage() {
 
         <TabsContent value="auctions">
           {data.pendingAuctions.length === 0 ? (
-            <div className="p-4">
-              <p className="text-gray-500">No pending auctions to approve</p>
+            <div className="text-center py-4 text-gray-500">
+              No pending auction approvals
             </div>
           ) : (
-            <div className="divide-y">
-              {data.pendingAuctions.map((auction: any) => (
+            <div className="space-y-4">
+              {data.pendingAuctions.map((auction) => (
                 <div
                   key={auction.id}
-                  className="p-4 flex items-center justify-between"
+                  className="flex items-center justify-between p-4 bg-white rounded-lg shadow"
                 >
                   <div>
-                    <p className="font-medium">{auction.title}</p>
+                    <h3 className="font-medium">{auction.title}</h3>
                     <p className="text-sm text-gray-500">
-                      by {auction.seller.name} ({auction.seller.email})
+                      by {auction.seller.name}
                     </p>
                   </div>
                   <div className="space-x-2">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       onClick={() => openModal("auction", auction)}
                     >
                       View Details
                     </Button>
                     <Button
-                      onClick={() =>
-                        handleApproval("auction", auction.id, true)
-                      }
+                      onClick={() => handleApprove("auction", auction.id)}
                       className="bg-green-500 hover:bg-green-600"
                     >
                       Approve
                     </Button>
                     <Button
-                      onClick={() =>
-                        handleApproval("auction", auction.id, false)
-                      }
+                      onClick={() => handleReject("auction", auction.id)}
                       variant="destructive"
                     >
                       Reject
@@ -185,12 +148,23 @@ export default function ApprovalsPage() {
         </TabsContent>
       </Tabs>
 
-      {selectedItem && modalType && (
-        <DetailsModal
+      {selectedItem && modalType === "seller" && (
+        <SellerDetailsModal
           isOpen={true}
           onClose={closeModal}
-          data={selectedItem}
-          title={modalType === "seller" ? "Seller Details" : "Auction Details"}
+          seller={selectedItem as User}
+          onApprove={(id) => handleApprove("seller", id)}
+          onReject={(id) => handleReject("seller", id)}
+        />
+      )}
+
+      {modalType === "auction" && selectedItem && (
+        <AuctionDetailsModal
+          isOpen={true}
+          onClose={closeModal}
+          auction={selectedItem as Auction}
+          onApprove={(id) => handleApprove("auction", id)}
+          onReject={(id) => handleReject("auction", id)}
         />
       )}
     </div>

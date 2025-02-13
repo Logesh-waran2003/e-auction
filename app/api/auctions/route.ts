@@ -41,7 +41,7 @@ export async function POST(req: Request) {
         endTime: new Date(endTime),
         images: images || [],
         sellerId: session.user.id,
-        status: "ACTIVE",
+        status: AuctionStatus.ACTIVE,
       },
     });
 
@@ -60,18 +60,46 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status") as AuctionStatus | null;
     const sellerId = searchParams.get("sellerId");
+    const approvalStatus = searchParams.get("approvalStatus");
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const auctions = await prisma.auction.findMany({
       where: {
-        ...(status && { status }),
+        ...(status && { status: status as AuctionStatus }),
         ...(sellerId && { sellerId }),
+        ...(approvalStatus === "pending" && { status: AuctionStatus.PENDING }),
+        ...(approvalStatus === "approved" && { status: AuctionStatus.ACTIVE }),
       },
       include: {
         seller: {
           select: {
+            id: true,
             name: true,
             email: true,
+            role: true,
+            createdAt: true,
           },
+        },
+        bids: {
+          select: {
+            id: true,
+            amount: true,
+            createdAt: true,
+            bidder: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: {
+            amount: "desc",
+          },
+          take: 5,
         },
         _count: {
           select: {

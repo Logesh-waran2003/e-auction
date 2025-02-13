@@ -6,9 +6,7 @@ export async function GET() {
     const auctions = await prisma.auction.findMany({
       where: {
         status: "ACTIVE",
-        seller: {
-          isApproved: true,
-        },
+        isApproved: true,
       },
       include: {
         seller: {

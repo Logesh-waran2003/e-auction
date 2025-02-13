@@ -24,7 +24,7 @@ export function Navbar({ user }: NavbarProps) {
   ];
 
   const buyerNav = [
-    { label: "Profile", href: "/dashboard/profile" },
+    // { label: "Profile", href: "/dashboard/profile" },
     { label: "My Auctions", href: "/auctions" },
     { label: "Watchlist", href: "/auctions" },
   ];

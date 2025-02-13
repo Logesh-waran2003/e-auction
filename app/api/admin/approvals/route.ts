@@ -8,21 +8,45 @@ export async function GET() {
     const [pendingSellers, pendingAuctions, totalUsers] = await Promise.all([
       prisma.user.findMany({
         where: { role: "SELLER", isApproved: false },
-        select: { id: true, name: true, email: true },
+        include: {
+          profile: true,
+        },
       }),
       prisma.auction.findMany({
         where: { isApproved: false },
-        select: {
-          id: true,
-          title: true,
-          seller: { select: { name: true, email: true } },
+        include: {
+          seller: {
+            include: {
+              profile: true,
+            },
+          },
+          bids: {
+            include: {
+              bidder: true,
+            },
+            orderBy: {
+              amount: 'desc',
+            },
+          },
+          Comment: {
+            include: {
+              user: true,
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+          },
         },
       }),
       prisma.user.count(),
     ]);
 
+    console.log('API Response - Pending Sellers:', JSON.stringify(pendingSellers, null, 2));
+    console.log('API Response - Pending Auctions:', JSON.stringify(pendingAuctions, null, 2));
+
     return NextResponse.json({ pendingSellers, pendingAuctions, totalUsers });
   } catch (error) {
+    console.error("Error in GET /api/admin/approvals:", error);
     return NextResponse.json(
       { error: "Failed to fetch data" },
       { status: 500 }
@@ -48,8 +72,9 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Error in PATCH /api/admin/approvals:", error);
     return NextResponse.json(
-      { error: "Failed to update approval" },
+      { error: "Failed to update approval status" },
       { status: 500 }
     );
   }

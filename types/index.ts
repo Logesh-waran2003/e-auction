@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { Role, AuctionStatus } from "@prisma/client";
 
 export interface User {
   id: string;
@@ -29,6 +29,26 @@ export interface Profile {
   taxId?: string;
 }
 
+export interface Bid {
+  id: string;
+  amount: number;
+  createdAt: Date;
+  bidder: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface Comment {
+  id: string;
+  text: string;
+  createdAt: Date;
+  user: {
+    id: string;
+    name: string;
+  };
+}
+
 export interface Auction {
   id: string;
   title: string;
@@ -37,15 +57,25 @@ export interface Auction {
   currentPrice: number;
   images: string[];
   sellerId: string;
-  status: string;
+  status: AuctionStatus;
+  isApproved: boolean;
   createdAt: Date;
   endTime: Date;
   updatedAt: Date;
-  seller?: {
+  seller: {
     id: string;
-    name?: string;
+    name: string;
     email: string;
+    profile?: Profile;
   };
+  bids?: Bid[];
+  comments?: Comment[];
+}
+
+export interface ApprovalsData {
+  pendingSellers: User[];
+  pendingAuctions: Auction[];
+  totalUsers: number;
 }
 
 export interface AuthState {

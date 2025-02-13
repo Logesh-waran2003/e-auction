@@ -98,4 +98,6 @@ enum AuctionStatus {
   ENDED
   CANCELLED
   PENDING
+  PENDING_APPROVAL
+  REJECTED
 }
