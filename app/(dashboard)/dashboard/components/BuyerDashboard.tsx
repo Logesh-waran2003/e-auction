@@ -55,9 +55,9 @@ export function BuyerDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Available Auctions</h2>
-        <Link href="/auctions">
-          <Button variant="outline">View All Auctions</Button>
-        </Link>
+        {/* <Link href="/auctions"> */}
+        <Button variant="outline">View All Auctions</Button>
+        {/* </Link> */}
       </div>
 
       {auctions.length === 0 ? (

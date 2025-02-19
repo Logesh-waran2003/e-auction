@@ -26,6 +26,12 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { X } from "lucide-react";
 
+interface UploadResponse {
+  success: boolean;
+  paths?: string[];
+  error?: string;
+}
+
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
@@ -35,8 +41,10 @@ const formSchema = z.object({
     return date > new Date();
   }, "End time must be in the future"),
   images: z
-    .array(z.string().url("Please enter a valid URL"))
-    .min(1, "At least one image URL is required"),
+    .array(z.any())
+    .refine((files) => files.every((file) => file instanceof File), 'Invalid file format')
+    .refine((files) => files.length >= 1, 'At least one image is required')
+    .refine((files) => files.every((file) => file.size <= 4 * 1024 * 1024), 'File size must be less than 4MB'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -44,7 +52,6 @@ type FormData = z.infer<typeof formSchema>;
 export function CreateAuctionForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [newImageUrl, setNewImageUrl] = useState("");
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -59,18 +66,36 @@ export function CreateAuctionForm() {
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
-
     try {
-      const response = await fetch("/api/auctions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
+      // Upload images
+      const uploadFormData = new FormData();
+      data.images.forEach((file: File) => uploadFormData.append('files', file));
+
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload images');
+      }
+
+      const uploadResult: UploadResponse = await uploadResponse.json();
+      const imagePaths = uploadResult.paths;
+
+      // Submit auction data
+      const auctionResponse = await fetch('/api/auctions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          images: imagePaths,
+          startPrice: Number(data.startPrice),
+        }),
+      });
+
+      if (!auctionResponse.ok) {
+        const errorData = await auctionResponse.json();
         throw new Error(errorData.error || "Failed to create auction");
       }
 
@@ -84,28 +109,6 @@ export function CreateAuctionForm() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const addImageUrl = () => {
-    if (!newImageUrl) return;
-
-    try {
-      new URL(newImageUrl); // Validate URL
-      const currentImages = form.getValues("images");
-      form.setValue("images", [...currentImages, newImageUrl]);
-      setNewImageUrl("");
-    } catch (error) {
-      console.error(error);
-      toast.error("Please enter a valid URL");
-    }
-  };
-
-  const removeImage = (index: number) => {
-    const currentImages = form.getValues("images");
-    form.setValue(
-      "images",
-      currentImages.filter((_, i) => i !== index)
-    );
   };
 
   return (
@@ -198,49 +201,17 @@ export function CreateAuctionForm() {
               name="images"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URLs</FormLabel>
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <Input
-                        type="url"
-                        placeholder="Enter image URL"
-                        value={newImageUrl}
-                        onChange={(e) => setNewImageUrl(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            addImageUrl();
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        onClick={addImageUrl}
-                        variant="secondary"
-                      >
-                        Add
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      {field.value.map((url, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2 bg-secondary/20 p-2 rounded-md"
-                        >
-                          <span className="text-sm truncate flex-1">{url}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeImage(index)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <FormLabel>Auction Images</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) =>
+                        field.onChange(Array.from(e.target.files || []))
+                      }
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
