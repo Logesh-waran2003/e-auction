@@ -24,7 +24,13 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 interface UploadResponse {
   success: boolean;
@@ -40,14 +46,25 @@ const formSchema = z.object({
     const date = new Date(val);
     return date > new Date();
   }, "End time must be in the future"),
+  itemType: z.enum(["IRON", "METAL", "ALUMINIUM"], {
+    required_error: "Please select an item type",
+  }),
   images: z
     .array(z.any())
-    .refine((files) => files.every((file) => file instanceof File), 'Invalid file format')
-    .refine((files) => files.length >= 1, 'At least one image is required')
-    .refine((files) => files.every((file) => file.size <= 4 * 1024 * 1024), 'File size must be less than 4MB'),
+    .refine(
+      (files) => files.every((file) => file instanceof File),
+      "Invalid file format"
+    )
+    .refine((files) => files.length >= 1, "At least one image is required")
+    .refine(
+      (files) => files.every((file) => file.size <= 4 * 1024 * 1024),
+      "File size must be less than 4MB"
+    ),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = z.infer<typeof formSchema> & {
+  itemType: "IRON" | "METAL" | "ALUMINIUM";
+};
 
 export function CreateAuctionForm() {
   const router = useRouter();
@@ -67,26 +84,34 @@ export function CreateAuctionForm() {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     try {
+      console.log(
+        "[Form Submission] Initial data:",
+        JSON.stringify(data, null, 2)
+      );
+
       // Upload images
       const uploadFormData = new FormData();
-      data.images.forEach((file: File) => uploadFormData.append('files', file));
-
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
+      data.images.forEach((file: File) => {
+        console.log("[Form Submission] Adding file:", file.name, file.size);
+        uploadFormData.append("files", file);
+      });
+      const uploadResponse = await fetch("/api/upload", {
+        method: "POST",
         body: uploadFormData,
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload images');
+        throw new Error("Failed to upload images");
       }
 
       const uploadResult: UploadResponse = await uploadResponse.json();
+      console.log("[Form Submission] Upload response:", uploadResult);
       const imagePaths = uploadResult.paths;
 
       // Submit auction data
-      const auctionResponse = await fetch('/api/auctions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const auctionResponse = await fetch("/api/auctions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
           images: imagePaths,
@@ -150,6 +175,31 @@ export function CreateAuctionForm() {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="itemType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Material Type</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select material type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="IRON">Iron</SelectItem>
+                      <SelectItem value="METAL">Metal</SelectItem>
+                      <SelectItem value="ALUMINIUM">Aluminium</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

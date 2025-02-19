@@ -5,51 +5,149 @@ import { PrismaClient, Role, AuctionStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// export async function POST(req: Request) {
+//   try {
+//     const session = await getServerSession(authOptions);
+
+//     if (!session) {
+//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+//     }
+
+//     if (session.user.role !== Role.SELLER) {
+//       return NextResponse.json(
+//         { error: "Only sellers can create auctions" },
+//         { status: 403 }
+//       );
+//     }
+
+//     const data = await req.json();
+//     const { title, description, startPrice, endTime, images, itemType } = data;
+
+//     // Validate required fields
+//     if (!title || !description || !startPrice || !endTime) {
+//       return NextResponse.json(
+//         { error: "Missing required fields" },
+//         { status: 400 }
+//       );
+//     }
+
+//     // Create the auction
+//     const auction = await prisma.auction.create({
+//       data: {
+//         title,
+//         description,
+//         startPrice,
+//         currentPrice: startPrice,
+//         endTime: new Date(endTime),
+//         images: images || [],
+//         sellerId: session.user.id,
+//         itemType,
+//         status: AuctionStatus.ACTIVE,
+//       },
+//     });
+
+//     return NextResponse.json(auction);
+//   } catch (error) {
+//     console.error("Auction creation error:", error);
+//     return NextResponse.json(
+//       { error: "Failed to create auction" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+// app/api/auctions/route.ts
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
+    console.log("[Auction Creation] Session:", session);
 
-    if (!session) {
+    if (!session?.user?.id) {
+      console.error("[Auction Creation] Unauthorized access attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== Role.SELLER) {
-      return NextResponse.json(
-        { error: "Only sellers can create auctions" },
-        { status: 403 }
-      );
-    }
+    const rawBody = await req.text();
+    console.log("[Auction Creation] Raw request body:", rawBody);
+    const data = JSON.parse(rawBody);
 
-    const data = await req.json();
-    const { title, description, startPrice, endTime, images } = data;
+    const {
+      title,
+      description,
+      startPrice,
+      endTime,
+      images = [],
+      itemType = "IRON",
+    } = data;
 
     // Validate required fields
-    if (!title || !description || !startPrice || !endTime) {
+    const missingFields = [];
+    if (!title?.trim()) missingFields.push("title");
+    if (!description?.trim()) missingFields.push("description");
+    if (!startPrice) missingFields.push("startPrice");
+    if (!endTime) missingFields.push("endTime");
+
+    if (missingFields.length > 0) {
+      console.error("[Auction Creation] Missing fields:", missingFields);
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: `Missing required fields: ${missingFields.join(", ")}` },
         { status: 400 }
       );
     }
 
-    // Create the auction
+    // Validate numerical startPrice
+    if (isNaN(Number(startPrice))) {
+      console.error("[Auction Creation] Invalid startPrice:", startPrice);
+      return NextResponse.json(
+        { error: "startPrice must be a valid number" },
+        { status: 400 }
+      );
+    }
+
+    // Validate itemType enum
+    const validItemTypes = ["IRON", "METAL", "ALUMINIUM"];
+    if (!validItemTypes.includes(itemType)) {
+      console.error("[Auction Creation] Invalid itemType:", itemType);
+      return NextResponse.json(
+        { error: "Invalid item type specified" },
+        { status: 400 }
+      );
+    }
+
+    console.log("[Auction Creation] Creating auction with:", {
+      title: title.trim(),
+      description: description.trim(),
+      startPrice: Number(startPrice),
+      endTime: new Date(endTime),
+      images,
+      itemType,
+      sellerId: session.user.id,
+    });
+
     const auction = await prisma.auction.create({
       data: {
-        title,
-        description,
-        startPrice,
-        currentPrice: startPrice,
+        title: title.trim(),
+        description: description.trim(),
+        startPrice: Number(startPrice),
+        currentPrice: Number(startPrice),
         endTime: new Date(endTime),
-        images: images || [],
+        images,
         sellerId: session.user.id,
+        itemType,
         status: AuctionStatus.ACTIVE,
       },
     });
 
+    console.log("[Auction Creation] Success:", auction.id);
     return NextResponse.json(auction);
   } catch (error) {
-    console.error("Auction creation error:", error);
+    console.error("[Auction Creation] Critical Error:", {
+      error,
+      rawError: error instanceof Error ? error.message : "Unknown error type",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
-      { error: "Failed to create auction" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

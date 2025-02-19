@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { AuctionStatus, PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
@@ -13,7 +13,7 @@ export async function GET() {
         },
       }),
       prisma.auction.findMany({
-        where: { isApproved: false },
+        where: { status: "PENDING_APPROVAL" },
         include: {
           seller: {
             include: {
@@ -25,7 +25,7 @@ export async function GET() {
               bidder: true,
             },
             orderBy: {
-              amount: 'desc',
+              amount: "desc",
             },
           },
           Comment: {
@@ -33,7 +33,7 @@ export async function GET() {
               user: true,
             },
             orderBy: {
-              createdAt: 'desc',
+              createdAt: "desc",
             },
           },
         },
@@ -41,8 +41,14 @@ export async function GET() {
       prisma.user.count(),
     ]);
 
-    console.log('API Response - Pending Sellers:', JSON.stringify(pendingSellers, null, 2));
-    console.log('API Response - Pending Auctions:', JSON.stringify(pendingAuctions, null, 2));
+    console.log(
+      "API Response - Pending Sellers:",
+      JSON.stringify(pendingSellers, null, 2)
+    );
+    console.log(
+      "API Response - Pending Auctions:",
+      JSON.stringify(pendingAuctions, null, 2)
+    );
 
     return NextResponse.json({ pendingSellers, pendingAuctions, totalUsers });
   } catch (error) {
@@ -56,7 +62,8 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const { type, id, approved } = await request.json();
+    const body = await request.json();
+    const { type, id, approved } = body;
 
     if (type === "seller") {
       await prisma.user.update({
@@ -66,16 +73,15 @@ export async function PATCH(request: Request) {
     } else if (type === "auction") {
       await prisma.auction.update({
         where: { id },
-        data: { isApproved: approved },
+        data: {
+          status: approved ? AuctionStatus.ACTIVE : AuctionStatus.REJECTED,
+        },
       });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ message: "Successfully updated" });
   } catch (error) {
     console.error("Error in PATCH /api/admin/approvals:", error);
-    return NextResponse.json(
-      { error: "Failed to update approval status" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
   }
 }
