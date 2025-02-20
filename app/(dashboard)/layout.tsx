@@ -15,7 +15,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 font-montserrat">
       <Navbar user={session.user} />
       <main className="max-w-7xl mx-auto mt-8">
         <div className="bg-white rounded-lg shadow-md">{children}</div>

@@ -111,9 +111,13 @@ export function CreateAuctionForm() {
     }
   };
 
+{/*Return the tailwindcss */}
+
   return (
-    <Card>
-      <CardHeader>
+    
+    <Card className="bg-red-500 font-montserrat">
+      <div className="">
+      <CardHeader className="">
         <CardTitle>Create New Auction</CardTitle>
         <CardDescription>
           Fill in the details below to create your auction. All fields are
@@ -230,6 +234,8 @@ export function CreateAuctionForm() {
           </form>
         </Form>
       </CardContent>
+      </div>
     </Card>
+    
   );
 }

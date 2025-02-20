@@ -55,7 +55,15 @@ export default {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
-  		}
+  		},
+		 backgroundImage: {
+          login: "url('/login_2.jpg')",
+        },
+          fontFamily: {
+          cinzal: ["Cinzel", "serif"],
+          montserrat: ["Montserrat", "sans-serif"],
+    },
+
   	}
   },
   plugins: [require("tailwindcss-animate")],
