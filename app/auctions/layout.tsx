@@ -15,11 +15,15 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div>
+    <div className="border border-black bg-gray-700 w-full h-32 font-montserrat  text-white text-2xl ">
       <Navbar user={session.user} />
-      <main className="max-w-7xl mx-auto mt-8">
-        <div className="bg-white rounded-lg shadow-md">{children}</div>
+      </div>
+      <main className="bg-createauctionimg bg-cover bg-center bg-no-repeat filter brightness-90 ">
+        <div className=" rounded-lg shadow-md">{children}</div>
       </main>
+  
+    
     </div>
   );
 }

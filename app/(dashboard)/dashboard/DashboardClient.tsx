@@ -67,7 +67,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <main className="max-w-7xl mx-auto mt-8">
+      <main className="max-w-7xl mx-auto mt-6">
         <div className="bg-white rounded-lg shadow-md">
           {renderRoleSpecificContent()}
         </div>

@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { CreateAuctionForm } from "./components/auctions/CreateAuctionForm";
 
 export default {
     darkMode: ["class"],
@@ -58,6 +59,8 @@ export default {
   		},
 		 backgroundImage: {
           login: "url('/login_2.jpg')",
+		  createauctionimg:"url('/createAuction2-bg.jpg')"
+
         },
           fontFamily: {
           cinzal: ["Cinzel", "serif"],

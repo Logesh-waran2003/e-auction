@@ -11,9 +11,11 @@ export default async function CreateAuctionPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Create New Auction</h1>
+    // <div className="font-montserrat bg-createauctionimg no-repeat bg-cover">
+    <div className="max-w-1xl mx-auto p-6">
+      
       <CreateAuctionForm />
     </div>
+    // </div>
   );
 }

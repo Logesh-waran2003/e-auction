@@ -36,13 +36,12 @@ export function Navbar({ user }: NavbarProps) {
   };
 
   return (
-    <nav className="border-b ">
-    
-      <div className="flex h-16 items-center px-4">
+    <nav className="border-b-200 font-montserrat font-bold text-3xl">
+     <div className=" h-16 flex items-center px-4  justify-center bg-gray-700 w-full h-32 font-montserrat  text-white text-2xl ">
         <div className="flex items-center space-x-4">
           <Link href="/dashboard">
-            <h2 className="text-lg font-semibold cursor-pointer">
-              {user.role.charAt(0) + user.role.slice(1).toLowerCase()} Dashboard
+            <h2 className="text-5xl font-semibold cursor-pointer text-green-500 p-1"> Gluby
+              {/* {user.role.charAt(0) + user.role.slice(1).toLowerCase()} Dashboard */}
             </h2>
           </Link>
 
@@ -52,21 +51,20 @@ export function Navbar({ user }: NavbarProps) {
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="text-sm text-gray-700 hover:text-gray-900"
-                >
+                  className="text-base text-white font-bold  hover:text-rose-600">
                   {item.label}
                 </Link>
               ))}
             </div>
           )}
         </div>
-        <div className="ml-auto flex items-center space-x-4">
-          <span className="text-sm text-muted-foreground">
+        <div className="ml-auto flex items-center space-x-4 font-montserrat">
+          <span className=" text-muted-foreground text-lg">
             Welcome, {user.name || "User"}
           </span>
           <button
             onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+            className="bg-rose-500 text-white p-2 rounded hover:bg-red-600 transition-color font-semibold text-base"
           >
             Logout
           </button>

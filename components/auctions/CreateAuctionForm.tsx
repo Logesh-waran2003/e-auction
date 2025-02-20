@@ -25,6 +25,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { X } from "lucide-react";
+import { NumericFormat } from "react-number-format";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import dayjs from "dayjs";
+import { Controller } from "react-hook-form";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+
+dayjs.extend(customParseFormat);
+
 
 interface UploadResponse {
   success: boolean;
@@ -115,18 +125,19 @@ export function CreateAuctionForm() {
 
   return (
     
-    <Card className="bg-red-500 font-montserrat">
-      <div className="">
-      <CardHeader className="">
-        <CardTitle>Create New Auction</CardTitle>
-        <CardDescription>
+    <Card className="bg-white opacity-70 font-montserrat text-red-500  shadow-lg rounded-lg w-1/2 mx-auto block">
+  <div >
+      <CardHeader >
+        <CardTitle className="text-green-700 text-3xl opacity-100 underline font-extrabold p-2">Create New Auction</CardTitle>
+        {/* <CardDescription className="text-2xl">
           Fill in the details below to create your auction. All fields are
           required.
-        </CardDescription>
+        </CardDescription> */}
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 text-3xl text-black opacity-100 font-extrabold
+">
             <FormField
               control={form.control}
               name="title"
@@ -160,45 +171,75 @@ export function CreateAuctionForm() {
             />
 
             <FormField
-              control={form.control}
-              name="startPrice"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Starting Price (₹)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseFloat(e.target.value))
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+  control={form.control}
+  name="startPrice"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Starting Price ($)</FormLabel>
+      <FormControl>
+        <NumericFormat
+          thousandSeparator={true} // Adds commas automatically
+          allowNegative={false}    // Prevents negative values
+          prefix={"$"}             // Adds "$" prefix
+          decimalScale={2}         // Limits to 2 decimal places
+          fixedDecimalScale={true} // Always show 2 decimal places
+          customInput={Input}      // Uses your existing Input component
+          value={field.value}      // Ensures integration with React Hook Form
+          onValueChange={(values) => field.onChange(values.value)} 
+          placeholder="$ 0.00"// Pass only the numeric value
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
 
-            <FormField
-              control={form.control}
-              name="endTime"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>End Time</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="datetime-local"
-                      min={new Date().toISOString().slice(0, 16)}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <FormField
+  control={form.control}
+  name="endTime"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel className="p-2">End Time</FormLabel>
+      <FormControl>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <Controller
+            control={form.control}
+            name="endTime"
+            render={({ field }) => (
+              <DateTimePicker
+                label="Select End Time"
+                value={field.value ? dayjs(field.value) : null} // Ensure proper parsing
+                onChange={(newValue) => {
+                  if (newValue) {
+                    const formattedDate = dayjs(newValue).format("MMMM D, YYYY, h:mm A");
+                    field.onChange(formattedDate);
+                  }
+                }}
+                disablePast // ✅ Blocks past dates
+                shouldDisableTime={(timeValue, clockType) => {
+                  const now = dayjs();
+                  const selectedDate = field.value ? dayjs(field.value) : null;
+
+                  // Disable past hours and minutes for today
+                  if (selectedDate && selectedDate.isSame(now, "day")) {
+                    if (clockType === "hours" && timeValue < now.hour()) return true;
+                    if (clockType === "minutes" && selectedDate.hour() === now.hour() && timeValue < now.minute()) return true;
+                  }
+                  return false;
+                }}
+                ampm // ✅ Enables 12-hour format with AM/PM
+                format="MMMM D, YYYY, h:mm A"
+                slotProps={{ textField: { variant: "outlined" } }}
+              />
+            )}
+          />
+        </LocalizationProvider>
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+
 
             <FormField
               control={form.control}
@@ -221,7 +262,7 @@ export function CreateAuctionForm() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-black text-white" disabled={isLoading}>
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
