@@ -1,6 +1,9 @@
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('BUYER', 'SELLER', 'SUPER_ADMIN');
 
+-- CreateEnum
+CREATE TYPE "AuctionStatus" AS ENUM ('DRAFT', 'ACTIVE', 'ENDED', 'CANCELLED', 'PENDING', 'PENDING_APPROVAL', 'REJECTED');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -9,6 +12,7 @@ CREATE TABLE "User" (
     "password" TEXT NOT NULL,
     "role" "Role" NOT NULL DEFAULT 'BUYER',
     "isApproved" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -17,7 +21,17 @@ CREATE TABLE "User" (
 CREATE TABLE "Profile" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "email" TEXT,
     "phone" TEXT,
+    "companyRegNo" TEXT,
+    "city" TEXT,
+    "state" TEXT,
+    "pincode" TEXT,
+    "establishedAt" TIMESTAMP(3),
+    "natureOfBusiness" TEXT,
+    "panNo" TEXT,
+    "contactNo" TEXT,
+    "dob" TIMESTAMP(3),
     "address" TEXT,
     "country" TEXT,
     "company" TEXT,
@@ -33,9 +47,14 @@ CREATE TABLE "Auction" (
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "startPrice" DOUBLE PRECISION NOT NULL,
+    "currentPrice" DOUBLE PRECISION NOT NULL,
+    "images" TEXT[],
     "sellerId" TEXT NOT NULL,
+    "status" "AuctionStatus" NOT NULL DEFAULT 'DRAFT',
     "isApproved" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "endTime" TIMESTAMP(3) NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Auction_pkey" PRIMARY KEY ("id")
 );
@@ -44,11 +63,22 @@ CREATE TABLE "Auction" (
 CREATE TABLE "Bid" (
     "id" TEXT NOT NULL,
     "amount" DOUBLE PRECISION NOT NULL,
-    "userId" TEXT NOT NULL,
+    "bidderId" TEXT NOT NULL,
     "auctionId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Bid_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Comment" (
+    "id" TEXT NOT NULL,
+    "text" TEXT NOT NULL,
+    "auctionId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Comment_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -57,6 +87,12 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 -- CreateIndex
 CREATE UNIQUE INDEX "Profile_userId_key" ON "Profile"("userId");
 
+-- CreateIndex
+CREATE INDEX "Bid_auctionId_idx" ON "Bid"("auctionId");
+
+-- CreateIndex
+CREATE INDEX "Bid_bidderId_idx" ON "Bid"("bidderId");
+
 -- AddForeignKey
 ALTER TABLE "Profile" ADD CONSTRAINT "Profile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -64,7 +100,13 @@ ALTER TABLE "Profile" ADD CONSTRAINT "Profile_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "Auction" ADD CONSTRAINT "Auction_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Bid" ADD CONSTRAINT "Bid_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Bid" ADD CONSTRAINT "Bid_bidderId_fkey" FOREIGN KEY ("bidderId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Bid" ADD CONSTRAINT "Bid_auctionId_fkey" FOREIGN KEY ("auctionId") REFERENCES "Auction"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Comment" ADD CONSTRAINT "Comment_auctionId_fkey" FOREIGN KEY ("auctionId") REFERENCES "Auction"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Comment" ADD CONSTRAINT "Comment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
