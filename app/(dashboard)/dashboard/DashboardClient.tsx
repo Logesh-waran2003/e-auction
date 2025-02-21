@@ -3,6 +3,7 @@
 import { Role } from "@prisma/client";
 import { useApprovals } from "@/hooks/useApprovals";
 import { BuyerDashboard } from "./components/BuyerDashboard";
+import { SellerDashboard } from "./components/SellerDashboard";
 
 interface DashboardClientProps {
   user: {
@@ -50,6 +51,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
           <div className="p-6">
             <h2 className="text-xl font-semibold mb-4">Seller Dashboard</h2>
             {/* Add seller-specific content here */}
+            <SellerDashboard />
           </div>
         );
       case Role.BUYER:
