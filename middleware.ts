@@ -1,5 +1,5 @@
-import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
+import { withAuth } from 'next-auth/middleware';
+import { NextResponse } from 'next/server';
 export default withAuth(
   function middleware(req) {
     // If the user is already logged in, redirect him to dashboard
@@ -7,13 +7,13 @@ export default withAuth(
     const token = req.nextauth.token;
     const isAuth = !!token;
     const isAuthPage =
-      req.nextUrl.pathname.startsWith("/login") ||
-      req.nextUrl.pathname.startsWith("/register") ||
-      req.nextUrl.pathname.startsWith("/sellerRegister");
+      req.nextUrl.pathname.startsWith('/login') ||
+      req.nextUrl.pathname.startsWith('/register') ||
+      req.nextUrl.pathname.startsWith('/sellerRegister');
 
     if (isAuthPage) {
       if (isAuth) {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
+        return NextResponse.redirect(new URL('/dashboard', req.url));
       }
       return null; // If not logged in, allow access to login and register pages
     }
@@ -27,9 +27,10 @@ export default withAuth(
         from += req.nextUrl.search;
       }
 
-      return NextResponse.redirect(
-        new URL(`/login?from=${encodeURIComponent(from)}`, req.url)
-      );
+      // return NextResponse.redirect(
+      //   new URL(`/login?from=${encodeURIComponent(from)}`, req.url)
+      // );
+      return NextResponse.redirect(new URL(`/`, req.url));
     }
   },
   {
@@ -50,6 +51,7 @@ export const config = {
      * - login
      * - register
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|login|register).*)",
+    // '/((?!api|_next/static|_next/image|favicon.ico|login|register).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|login|register|$).*)',
   ],
 };
