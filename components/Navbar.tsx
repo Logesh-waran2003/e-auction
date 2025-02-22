@@ -1,8 +1,11 @@
-"use client";
+'use client';
 
-import { Role } from "@prisma/client";
-import { signOut } from "next-auth/react";
-import Link from "next/link";
+import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { Role } from '@prisma/client';
+import { signOut } from 'next-auth/react';
+import Link from 'next/link';
+import { FiUser, FiX } from 'react-icons/fi';
 
 interface NavbarProps {
   user: {
@@ -12,65 +15,123 @@ interface NavbarProps {
 }
 
 export function Navbar({ user }: NavbarProps) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const pathname = usePathname();
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
   const handleLogout = async () => {
-    await signOut({ callbackUrl: "/login" });
+    await signOut({ callbackUrl: '/login' });
   };
 
-  const adminNav = [{ label: "Approvals", href: "/dashboard/approvals" }];
-
-  const sellerNav = [
-    { label: "Create Auction", href: "/auctions/create" },
-    { label: "My Auctions", href: "/auctions" },
-  ];
-
-  const buyerNav = [
-    // { label: "Profile", href: "/dashboard/profile" },
-    { label: "My Auctions", href: "/auctions" },
-    { label: "Watchlist", href: "/auctions" },
-  ];
-
   const navItems = {
-    [Role.SUPER_ADMIN]: adminNav,
-    [Role.SELLER]: sellerNav,
-    [Role.BUYER]: buyerNav,
+    [Role.SUPER_ADMIN]: [{ label: 'Approvals', href: '/dashboard/approvals' }],
+    [Role.SELLER]: [
+      { label: 'Create Auction', href: '/auctions/create' },
+      { label: 'My Auctions', href: '/auctions' },
+    ],
+    [Role.BUYER]: [
+      { label: 'My Auctions', href: '/auctions' },
+      { label: 'Watchlist', href: '/watchlist' },
+    ],
   };
 
   return (
-    <nav className="border-b">
-      <div className="flex h-16 items-center px-4">
-        <div className="flex items-center space-x-4">
-          <Link href="/dashboard">
-            <h2 className="text-lg font-semibold cursor-pointer">
-              {user.role.charAt(0) + user.role.slice(1).toLowerCase()} Dashboard
-            </h2>
-          </Link>
-
-          {user.role && (
-            <div className="flex space-x-4 ml-8">
-              {navItems[user.role].map((item) => (
+    <>
+      {/* Navbar */}
+      <nav className='bg-gradient-to-r from-indigo-50 to-gray-100/70 backdrop-blur-xl shadow-lg rounded-2xl p-5 flex items-center justify-between border border-gray-300 mx-4 mt-4'>
+        {/* Left Section - Welcome and Navigation */}
+        <div className='flex flex-col'>
+          <span className='text-2xl font-bold text-gray-900'>
+            Welcome, {user.name || 'User'}
+          </span>
+          <div className='flex space-x-6 mt-1'>
+            <Link
+              href='/dashboard'
+              className={`font-medium hover:underline ${
+                pathname === '/dashboard' ? 'text-indigo-600' : 'text-gray-700'
+              }`}
+            >
+              Dashboard
+            </Link>
+            {user.role &&
+              navItems[user.role].map((item) => (
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="text-sm text-gray-700 hover:text-gray-900"
+                  className={`hover:underline transition ${
+                    pathname === item.href ? 'text-indigo-600' : 'text-gray-700'
+                  }`}
                 >
                   {item.label}
                 </Link>
               ))}
-            </div>
-          )}
+          </div>
         </div>
-        <div className="ml-auto flex items-center space-x-4">
-          <span className="text-sm text-muted-foreground">
-            Welcome, {user.name || "User"}
-          </span>
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-          >
-            Logout
+
+        {/* Right Section - Profile Icon */}
+        <button
+          className='w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 transition-all'
+          onClick={toggleSidebar}
+          aria-label='Toggle Menu'
+        >
+          <FiUser size={24} />
+        </button>
+      </nav>
+
+      {/* Sidebar Menu */}
+      <aside
+        className={`fixed top-0 right-0 h-full w-72 bg-gradient-to-br from-indigo-50 to-white/70 backdrop-blur-lg shadow-xl rounded-l-2xl border border-gray-300 transform transition-transform duration-300 ${
+          isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* Sidebar Header */}
+        <div className='p-6 flex justify-between items-center border-b border-indigo-200/60'>
+          <span className='text-lg font-semibold text-gray-900'>Menu</span>
+          <button onClick={toggleSidebar} aria-label='Close Menu'>
+            <FiX
+              size={24}
+              className='text-gray-500 hover:text-gray-800 transition'
+            />
           </button>
         </div>
-      </div>
-    </nav>
+
+        {/* Sidebar Links */}
+        <ul className='mt-4 space-y-6 p-6'>
+          <li>
+            <Link
+              href='/profile'
+              className={`block text-lg transition ${
+                pathname === '/profile'
+                  ? 'font-bold text-indigo-700'
+                  : 'text-gray-700 hover:text-indigo-600'
+              }`}
+            >
+              Profile
+            </Link>
+          </li>
+          <li>
+            <Link
+              href='/settings'
+              className={`block text-lg transition ${
+                pathname === '/settings'
+                  ? 'font-bold text-indigo-700'
+                  : 'text-gray-700 hover:text-indigo-600'
+              }`}
+            >
+              Settings
+            </Link>
+          </li>
+          <li>
+            <button
+              onClick={handleLogout}
+              className='block text-lg text-red-500 hover:text-red-700 transition w-full text-left'
+            >
+              Logout
+            </button>
+          </li>
+        </ul>
+      </aside>
+    </>
   );
 }
